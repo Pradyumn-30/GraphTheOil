@@ -1,5 +1,9 @@
 import streamlit as st
 import os
+from pathlib import Path
+
+# Get the directory where app.py is located
+current_dir = Path(__file__).parent
 import time
 import base64
 from dotenv import load_dotenv
@@ -101,8 +105,8 @@ class AgentState(TypedDict):
 # Initialize Models (Tiered approach from v2.2)
 llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
 smaller_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
-cypher_prompt = load_prompt("cypher-few-shot.yaml")
-qa_prompt_template = load_prompt("qa-prompt.yaml")
+cypher_prompt = load_prompt(str(current_dir / "cypher-few-shot.yaml"))
+qa_prompt_template = load_prompt(str(current_dir / "qa-prompt.yaml"))
 
 # Neo4j Connection
 graph = Neo4jGraph(
