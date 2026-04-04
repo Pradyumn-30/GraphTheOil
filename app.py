@@ -61,6 +61,9 @@ graph = Neo4jGraph(
     database=os.getenv("NEO4J_USER")
 )
 
+graph.refresh_schema()
+CACHED_SCHEMA = graph.schema
+
 # Pre-calculate the latest year at startup to avoid dynamic Cypher overhead
 try:
     latest_year_res = graph.query("MATCH (t:YearMonth) RETURN max(t.yearMonth) / 100 AS latest_year")
@@ -104,7 +107,7 @@ def generate_cypher_node(state: AgentState, config: RunnableConfig):
     error_msg = f"\n\nPrevious attempt failed: {current_error}. Fix the query" if current_error else ""
     formatted_prompt = cypher_prompt.format(
         question=state["question"],
-        schema=graph.schema,
+        schema=CACHED_SCHEMA,
         error=error_msg,
         latest_year=LATEST_YEAR)+"\n\nYou MUST respond with a JSON object containing the key 'cypher_query'."
     
