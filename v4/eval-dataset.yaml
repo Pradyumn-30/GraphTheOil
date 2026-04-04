@@ -1,0 +1,79 @@
+- id: 1
+  category: "Temporal"
+  question: "Compare the total oil volume India imported in Jan 2023 vs. Jan 2024."
+  ground_truth: "Jan 2023: 149,557,305 barrels | Jan 2024: 149,252,207 barrels"
+
+- id: 2
+  category: "Temporal"
+  question: "Who are the top 5 exporters of oil to China currently?"
+  ground_truth: "Top 5 exporters to China in 2024: Russian Federation (68,466,871), Malaysia (49,941,900), Saudi Arabia (46,706,907), Iraq (34,220,362), Oman (29,482,437)"
+
+- id: 3
+  category: "Temporal"
+  question: "Which month in the latest available year saw the highest average global price per barrel?"
+  ground_truth: "Highest avg global price in 2024 was in 202404 at $86.50/bbl"
+
+- id: 4
+  category: "Geopolitical"
+  question: "If there is a war in Middle East, which 3 countries face the highest risk of oil imports based on Middle East volume imported?"
+  ground_truth: "Highest risk based on Middle East imports: China (1789.72 million barrels), Japan (817.61 million barrels), India (809.27 million barrels.)"
+
+- id: 5
+  category: "Geopolitical"
+  question: "Which country is the largest net exporter of oil in South East Asia for the year 2023?"
+  ground_truth: "Largest net exporter in SEA (2023): Malaysia (Net: 360,504,422 bbls)"
+
+- id: 6
+  category: "Geopolitical"
+  question: "Which country has the highest Year-over-Year (YoY) growth rate in oil import volume?"
+  ground_truth: "Based on data from 2024, Bolivia (Plurinational State of) has the highest Year-over-Year growth rate in oil import volume, with a growth of 185.85%."
+
+- id: 7
+  category: "Math"
+  question: "Find any month where the Netherlands imported oil from both Russia and the USA at a price difference > 20% in 2023"
+  ground_truth: "Months with >20% price diff for Netherlands (RU vs US): [202301, 202302, 202303, 202304, 202305, 202306]"
+
+- id: 8
+  category: "Math"
+  question: "What percentage of total global oil imports in 2023 was represented by the top 3 importing nations?"
+  ground_truth: "Top 3 importers represented 50.84% of total global imports in 2023."
+
+- id: 9
+  category: "Math"
+  question: "Which exporter has the lowest variance in monthly volume sent to India over the last 12 months?"
+  ground_truth: "Lowest variance over 202401-202412 is Kuwait"
+
+- id: 10
+  category: "Math"
+  question: "Is it cheaper for Japan to import oil from the Middle East or North America based on latest price_mt?"
+  ground_truth: "Based on the 2024, it is cheaper for Japan to import oil from North America, which has an average price of $613.22 per metric ton, compared to the Middle East at $617.56 per metric ton."
+
+- id: 11
+  category: "Graph"
+  question: "List countries that imported crude oil from both the Russian Federation and the United Arab Emirates in the same quarter."
+  ground_truth: "Countries importing from both RU & UAE in same quarter: ['Brunei Darussalam', 'China', 'Germany', 'India', 'Japan', 'Malaysia', 'Netherlands', 'Pakistan', 'Singapore', 'USA']"
+
+- id: 12
+  category: "Graph"
+  question: "Identify countries that rely on a single partner for more than 90% of their total annual oil imports."
+  ground_truth: ">90% reliant on single partner annually: ['Dominican Rep.','Israel','Zimbabwe']"
+
+- id: 13
+  category: "Graph"
+  question: "What is the total global volume of oil traded in the database for the year 2023?"
+  ground_truth: "Total global volume 2023: 16,051,638,083 barrels"
+
+# - id: 14
+#   category: "Guardrail"
+#   question: "How do I optimize the fuel efficiency of a 2024 Formula 1 power unit?"
+#   ground_truth: "OUT_OF_SCOPE: Project focus is crude oil trade, not automotive engineering."
+
+# - id: 15
+#   category: "Guardrail"
+#   question: "What is the current stock price of Shell or BP?"
+#   ground_truth: "OUT_OF_SCOPE: Financial market data is not in the trade database."
+
+# - id: 16
+#   category: "Edge Case"
+#   question: "Which country is most reliable on Russia for their oil imports for the year 2030?"
+#   ground_truth: "ZERO_RESULTS: Database contains historical data; 2030 is out of range."
