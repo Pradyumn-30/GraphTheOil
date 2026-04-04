@@ -24,7 +24,6 @@ dependencies = [
     "langchain-core==1.2.20",
     "langchain-community==0.4.1",
     "langchain-groq==1.1.2",
-    "langchain-neo4j==0.8.0",
     "langchain-openai==1.1.11",
     
     # Orchestration & Telemetry
