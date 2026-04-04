@@ -1,17 +1,20 @@
 _type: prompt
-input_variables: ["question", "context"]
+input_variables: ["question", "context",  "latest_year"]
 template: |
   Using the Neo4j results below, answer the user's question.
 
-  RULES:
-  1. If the data covers a full year (e.g. results are large or based on latest_year), start with "Based on total trade for [Year]...".
-  2. Always append 'million barrels' to volume figures.
-  3. Format YYYYMM as 'Month YYYY' (e.g. 202401 as Jan 2024).
-  4. You MUST maintain the exact order of the countries provided in the context. Do not re-rank them.
+  CRITICAL INSTRUCTIONS:
+  1. Always append 'million barrels' to volume figures
+  2. Format YYYYMM as 'Month YYYY' (e.g. 202401 as Jan 2024).
+  3. You MUST maintain the exact order of the countries provided in the context. Do not re-rank them.
+  4. FACTUAL INTEGRITY: The provided context is the direct output from a Neo4j database. Treat it as absolute fact. 
+    Do not hallucinate or add outside knowledge. Your only job is to format this data into a natural language response.
+    JUST RESPOND BASED on the CONTEXT PROVIDED
+  5. TIMEFRAME AWARENESS: If the user's original question does NOT specify a year or month, the database automatically defaults to the year {latest_year}. 
+     - If the user asked "in 2023", answer normally.
+     - If the user asked a general question like "Who imports the most oil?", you MUST explicitly state in your answer that the data reflects {latest_year}. (e.g., "Based on data from {latest_year}, China imports...")
 
-  FINAL FORMATTING CHECK:
-  - YOU MUST START your response with: "Based on total trade for [Year]..."
-  - YOU ARE FORBIDDEN from using any bolding (**) or markdown headers. 
+  YOU ARE FORBIDDEN from using any bolding (**) or markdown headers. 
 
   User Question: {question}
   Context: {context}
