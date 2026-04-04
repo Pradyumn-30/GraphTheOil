@@ -48,7 +48,8 @@ class AgentState(TypedDict):
 
 # Initialize Models (Tiered approach from v2.2)
 llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
-smaller_llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0) #8b is enough for this task
+smaller_llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0) #gatekeeping
+responder_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
 cypher_prompt = load_prompt("cypher-few-shot.yaml")
 qa_prompt_template = load_prompt("qa-prompt.yaml")
 
@@ -69,8 +70,8 @@ except Exception as e:
     LATEST_YEAR = 2024
 
 SCOPE_SYSTEM_PROMPT = (
-        "You are a strict binary classifier. Your ONLY job is to determine if the user's "
-        "question is about crude oil trade, volumes, prices. "
+        "You are a strict binary classifier. Your ONLY job is to determine if the user's"
+        "question is about crude oil trade, volumes, prices."
         "DO NOT attempt to answer the question. DO NOT perform any calculations. "
         "Output ONLY a JSON object with 'in_scope' (boolean) and 'reason' (string)."
     )
@@ -166,14 +167,18 @@ def execute_cypher_node(state: AgentState):
     except Exception as e:
         return {"error": str(e), "results": []}
 
-def responder_node(state: AgentState):
+def responder_node(state: AgentState, config: RunnableConfig):
     if not state["in_scope"]:
         return {"final_response": "I am sorry, but your request is outside the objectives of this oil trade intelligence project."}
     if not state["results"]:
         return {"final_response": "No matching oil trade data was found."}
-    full_qa_prompt = qa_prompt_template.format(question=state["question"], context=str(state["results"]))
+    full_qa_prompt = qa_prompt_template.format(
+        question=state["question"],
+        context=str(state["results"]),
+        latest_year=LATEST_YEAR
+        )
     with get_openai_callback() as cb:
-        summary = smaller_llm.invoke(full_qa_prompt, config=config) #8b is enough for this task?
+        summary = responder_llm.invoke(full_qa_prompt, config=config)
     return {"final_response": summary.content, "prompt_tokens": state.get("prompt_tokens", 0) + cb.prompt_tokens, "completion_tokens": state.get("completion_tokens", 0) + cb.completion_tokens, "total_tokens": state.get("total_tokens", 0) + cb.total_tokens}
 
 # GRAPH BUILDING (Refactored for Speculative Path)
