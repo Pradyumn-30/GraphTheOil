@@ -20,4 +20,4 @@ Powered by a tiered multi-agent architecture via **LangGraph**, it translates us
 
 ## System Architecture
 
-!images/system_architecture.png
+![System Architecture](images/system_architecture.png)
