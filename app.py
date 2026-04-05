@@ -1,40 +1,52 @@
-import streamlit as st
-import os
+# pylint: disable=line-too-long
+# pylint: disable=trailing-whitespace
+# pylint: disable=broad-exception-caught
+# pylint: disable=redefined-outer-name
+
+'''
+Author: Pradyumn Srivastava
+Date: 5th April 2026
+Project: GraphTheOil
+'''
+
 import concurrent.futures
-#from pathlib import Path
+import os
 import time
 import warnings
-import logging
-warnings.filterwarnings("ignore")
-
-# Get the directory where app.py is located
-#current_dir = Path(__file__).parent
-from dotenv import load_dotenv
 from typing import List, Optional, TypedDict
 
-# LangChain & Graph Components
+import streamlit as st
+from dotenv import load_dotenv
+from langchain_community.callbacks.manager import get_openai_callback
+from langchain_community.graphs import Neo4jGraph
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.prompts import load_prompt
-from langchain_groq import ChatGroq
-from langchain_community.graphs import Neo4jGraph
-from langgraph.graph import StateGraph, END
-from langchain_community.callbacks.manager import get_openai_callback
 from langchain_core.runnables import RunnableConfig
-from langsmith import Client
 from langchain_core.tracers.context import collect_runs
+from langchain_groq import ChatGroq
+from langgraph.graph import StateGraph, END
+from langsmith import Client
 from pydantic import BaseModel, Field
+
+#from pathlib import Path
+warnings.filterwarnings("ignore")
 
 load_dotenv()
 ls_client = Client()
 
 class ScopeAnalysis(BaseModel):
+    """Structured output for whether a user question is in scope for oil-trade Q&A."""
+
     in_scope: bool = Field(description="Is the question about crude oil trade?")
     reason: str = Field(description="Brief explanation for the scope decision.")
 
 class CypherResponse(BaseModel):
+    """LLM output wrapping a single Neo4j Cypher query string."""
+
     cypher_query: str = Field(description="The executable Neo4j Cypher query.")
 
 class AgentState(TypedDict):
+    """State carried through the LangGraph nodes for one Q&A turn."""
     question: str
     cypher: Optional[str]
     error: Optional[str]
@@ -80,10 +92,11 @@ SCOPE_SYSTEM_PROMPT = (
     )
 
 def check_scope_node(state: AgentState, config: RunnableConfig):
+    """Classify whether the user question is in scope for crude-oil trade Q&A."""
     # Use structured output for the Gatekeeper too
     structured_smaller_llm = smaller_llm.with_structured_output(ScopeAnalysis, method="json_mode")
     
-    with get_openai_callback() as cb:
+    with get_openai_callback() as openai_cb:
         # No more manual parsing required
         analysis = structured_smaller_llm.invoke(
             [
@@ -93,16 +106,16 @@ def check_scope_node(state: AgentState, config: RunnableConfig):
             config=config
             )
 
-    return {    
-        "in_scope": analysis.in_scope,
-        "prompt_tokens": cb.prompt_tokens, 
-        "completion_tokens": cb.completion_tokens, 
-        "total_tokens": cb.total_tokens, 
+    return {"in_scope": analysis.in_scope,
+        "prompt_tokens": openai_cb.prompt_tokens, 
+        "completion_tokens": openai_cb.completion_tokens, 
+        "total_tokens": openai_cb.total_tokens, 
         "iterations": 0, 
         "error": None
     }
 
 def generate_cypher_node(state: AgentState, config: RunnableConfig):
+    """Produce a Cypher query from the question, schema, and optional prior error."""
     current_error = state.get('error')
     error_msg = f"\n\nPrevious attempt failed: {current_error}. Fix the query" if current_error else ""
     formatted_prompt = cypher_prompt.format(
@@ -112,24 +125,24 @@ def generate_cypher_node(state: AgentState, config: RunnableConfig):
         latest_year=LATEST_YEAR)+"\n\nYou MUST respond with a JSON object containing the key 'cypher_query'."
     
     structured_llm = llm.with_structured_output(CypherResponse, method="json_mode")
-    with get_openai_callback() as cb:
+    with get_openai_callback() as openai_cb:
         try:
             response = structured_llm.invoke(formatted_prompt, config=config)
             return {
                     "cypher": response.cypher_query,
                     "error": None,
                     "iterations": state["iterations"] + 1,
-                    "prompt_tokens": state.get("prompt_tokens", 0) + cb.prompt_tokens, 
-                    "completion_tokens": state.get("completion_tokens", 0) + cb.completion_tokens,
-                    "total_tokens": state.get("total_tokens", 0) + cb.total_tokens
+                    "prompt_tokens": state.get("prompt_tokens", 0) + openai_cb.prompt_tokens, 
+                    "completion_tokens": state.get("completion_tokens", 0) + openai_cb.completion_tokens,
+                    "total_tokens": state.get("total_tokens", 0) + openai_cb.total_tokens
                     }
         except Exception as e:  
             return {
                     "error": f"LLM Output Failure: {str(e)}",
                     "iterations": state["iterations"] + 1,
-                    "prompt_tokens": state.get("prompt_tokens", 0) + cb.prompt_tokens,
-                    "completion_tokens": state.get("completion_tokens", 0) + cb.completion_tokens,
-                    "total_tokens": state.get("total_tokens", 0) + cb.total_tokens
+                    "prompt_tokens": state.get("prompt_tokens", 0) + openai_cb.prompt_tokens,
+                    "completion_tokens": state.get("completion_tokens", 0) + openai_cb.completion_tokens,
+                    "total_tokens": state.get("total_tokens", 0) + openai_cb.total_tokens
                     }
 
 def speculative_entry_node(state: AgentState, config: RunnableConfig):
@@ -163,14 +176,16 @@ def speculative_entry_node(state: AgentState, config: RunnableConfig):
         "total_tokens": state.get("total_tokens", 0) + scope_result.get("total_tokens", 0) + cypher_result.get("total_tokens", 0)
     }
 
-def execute_cypher_node(state: AgentState):     
+def execute_cypher_node(state: AgentState):
+    """Run the generated Cypher against Neo4j and return rows or an error string."""
     try:
         results = graph.query(state["cypher"])
-        return {"results": results, "error": None}  
+        return {"results": results, "error": None}
     except Exception as e:
         return {"error": str(e), "results": []}
 
 def responder_node(state: AgentState, config: RunnableConfig):
+    """Turn query results into a natural-language answer, or an out-of-scope message."""
     if not state["in_scope"]:
         return {"final_response": "I am sorry, but your request is outside the objectives of this oil trade intelligence project."}
     if not state["results"]:
@@ -180,9 +195,9 @@ def responder_node(state: AgentState, config: RunnableConfig):
         context=str(state["results"]),
         latest_year=LATEST_YEAR
         )
-    with get_openai_callback() as cb:
+    with get_openai_callback() as openai_cb:
         summary = responder_llm.invoke(full_qa_prompt, config=config)
-    return {"final_response": summary.content, "prompt_tokens": state.get("prompt_tokens", 0) + cb.prompt_tokens, "completion_tokens": state.get("completion_tokens", 0) + cb.completion_tokens, "total_tokens": state.get("total_tokens", 0) + cb.total_tokens}
+    return {"final_response": summary.content, "prompt_tokens": state.get("prompt_tokens", 0) + openai_cb.prompt_tokens, "completion_tokens": state.get("completion_tokens", 0) + openai_cb.completion_tokens, "total_tokens": state.get("total_tokens", 0) + openai_cb.total_tokens}
 
 # GRAPH BUILDING (Refactored for Speculative Path)
 workflow = StateGraph(AgentState)
@@ -242,9 +257,8 @@ if __name__ == "__main__":
                 },
                 "tags": ["streamlit_ui"]
             }
-            
             last_node_time = time.time()
-            for output in app.stream(inputs, config=config):
+            for output in app.stream(inputs, run=config):
                 duration = time.time() - last_node_time
                 for node_name, update in output.items():
                     with log_container:
@@ -256,4 +270,4 @@ if __name__ == "__main__":
                         st.chat_message("assistant").write(update["final_response"])
                 last_node_time = time.time()
 
-            run_id = cb.traced_runs[0].id # Captured for cloud tracking
+            run_id = cb.traced_runs[0].id

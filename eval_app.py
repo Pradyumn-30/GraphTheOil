@@ -1,28 +1,34 @@
+# pylint: disable=line-too-long
+# pylint: disable=trailing-whitespace
+# pylint: disable=broad-exception-caught
+# pylint: disable=redefined-outer-name
+
+'''
+Author: Pradyumn Srivastava
+Date: 5th April 2026
+Project: GraphTheOil
+'''
 import os
 import time
-import yaml
-import pandas as pd
-from datasets import Dataset
-from langsmith import Client
-from langchain_huggingface import HuggingFaceEmbeddings
 
+import pandas as pd
+import yaml
+from datasets import Dataset
+from langchain_huggingface import HuggingFaceEmbeddings
+from langsmith import Client
 from openai import AsyncOpenAI
+from ragas import evaluate
+from ragas.embeddings import LangchainEmbeddingsWrapper
+from ragas.llms import llm_factory
+from ragas.metrics import Faithfulness, ResponseRelevancy, ContextPrecision
 
 from app import app
 
 os.environ["LANGCHAIN_PROJECT"] = "GraphTheOil-Evaluation"
 
-from huggingface_hub import constants
-print(constants.HF_HUB_CACHE)
-
-from ragas.embeddings import LangchainEmbeddingsWrapper
-from ragas.metrics import Faithfulness, ResponseRelevancy, ContextPrecision
-from ragas.llms import llm_factory
-from ragas import evaluate
-
 def load_eval_dataset(file_path: str):
     """Helper to load the dataset from YAML."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
         
 EVAL_DATASET = load_eval_dataset("eval-dataset.yaml")
@@ -39,6 +45,7 @@ local_embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 ragas_embeddings = LangchainEmbeddingsWrapper(local_embeddings)
 
 def run_golden_eval():
+    """Benchmark each eval question through the LangGraph app and append Ragas scores to a CSV."""
     m_faith = Faithfulness(llm=ragas_llm)
     m_rel = ResponseRelevancy(llm=ragas_llm, embeddings=ragas_embeddings)
     m_rel.n = 1
@@ -104,7 +111,7 @@ def run_golden_eval():
         single_df = pd.DataFrame(single_eval_data)
         single_dataset = Dataset.from_pandas(single_df)
         
-        print(f"Generating Ragas Metrics...")
+        print("Generating Ragas Metrics...")
         
         # Evaluate just this one question
         eval_result = evaluate(dataset=single_dataset, metrics=[m_faith, m_rel, m_prec])
