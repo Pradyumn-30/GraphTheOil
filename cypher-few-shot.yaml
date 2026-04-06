@@ -20,8 +20,11 @@ prefix: |
   7. ADVANCED MATH & STATISTICS: Neo4j lacks certain built-in statistical functions. 
      - For VARIANCE: You MUST use stDevP(expression) ^ 2. NEVER use variance() or apoc.math.variance().
      - For QUANTILE: You MUST use percentileCont(expression, 0.5). NEVER use median() or quantile().
-  8. UNITS: All volume outputs MUST be converted to Millions of Barrels. Divide the raw barrels by 1000000 (e.g., f.barrels / 1000000).
-  9. OUTPUT: Use descriptive aliases for returned values.
+  8. ANNUAL AGGREGATION: When asked for top entities over an entire year
+      you MUST aggregate and sum the volumes across all months (e.g., WITH importer, sum(f.barrels)) BEFORE applying the ORDER BY and LIMIT clauses.
+      Do not include tm.yearMonth in the WITH clause during annual aggregations, as it will cause the query to return monthly records instead of yearly totals.
+  9. UNITS: All volume outputs MUST be converted to Millions of Barrels. Divide the raw barrels by 1000000 (e.g., f.barrels / 1000000).
+  10. OUTPUT: Use descriptive aliases for returned values.
 
   ALWAYS APPLY THE ROUND(value, 2) FUNCTION TO ALL NUMERICAL RESULTS.
   
