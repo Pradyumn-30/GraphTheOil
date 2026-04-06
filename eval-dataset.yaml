@@ -31,7 +31,7 @@
 - id: 7
   category: "Math"
   question: "Find any month where the Netherlands imported oil from both Russia and the USA at a price difference > 20% in 2023"
-  ground_truth: "Months with >20% price diff for Netherlands (RU vs US): [202301, 202302, 202303, 202304, 202305, 202306]"
+  ground_truth: "Months with >20% price diff for Netherlands (RU vs US): [202301, 202306, 202305]"
 
 - id: 8
   category: "Math"
@@ -77,3 +77,13 @@
 #   category: "Edge Case"
 #   question: "Which country is most reliable on Russia for their oil imports for the year 2030?"
 #   ground_truth: "ZERO_RESULTS: Database contains historical data; 2030 is out of range."
+
+- id: 17
+  category: "Graph"
+  question: "Which country in south america exported the most oil to north america?"
+  ground_truth: "Based on 2024 data, Venezuela exported the most oil to North America."
+
+- id: 18
+  category: "Graph"
+  question: "On an average what was the crude oil price in 2024?"
+  ground_truth: "Based on data from 2024, the average crude oil price was $609.87 per barrel."
