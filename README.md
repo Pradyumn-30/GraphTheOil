@@ -8,7 +8,7 @@ Powered by a tiered multi-agent architecture via LangGraph, it translates user q
 
 ## 🏗️ System Architecture
 
-<img src="./system_arch.png" alt="System Architecture" width="800">
+<img src="images/system_architecture.png" alt="System Architecture">
 
 ---
 
