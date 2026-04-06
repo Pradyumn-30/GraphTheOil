@@ -61,7 +61,7 @@ def run_golden_eval():
         print(f"\n🚀 Benchmarking Q{item['id']}: {item['question']}")
 
         eval_config = {
-            "tags": ["ragas_audit", "v3.0_parallel"],
+            "tags": ["ragas_audit", "v4.1"],
             "metadata": {"dataset": "evaluation_benchmark"}
         }
 
@@ -78,7 +78,7 @@ def run_golden_eval():
         tokens = state.get("total_tokens", 0)
         tps = tokens / latency if latency > 0 else 0
 
-        time.sleep(10)
+        # time.sleep(10)
         raw_results = state.get("results", [])
         formatted_contexts = []
         if isinstance(raw_results, list) and len(raw_results) > 0:
@@ -102,7 +102,6 @@ def run_golden_eval():
             "contexts": [formatted_contexts], 
             "ground_truth": [item["ground_truth"]],
             "latency_sec": [round(latency, 3)],
-            "ttft_sec": [round(latency * 0.2, 3)],
             "tokens_per_sec": [round(tps, 2)],
             "total_tokens": [tokens]
         }
@@ -113,7 +112,7 @@ def run_golden_eval():
         
         print("Generating Ragas Metrics...")
         
-        # Evaluate just this one question
+        # Evaluate just this one query
         eval_result = evaluate(dataset=single_dataset, metrics=[m_faith, m_rel, m_prec])
         ragas_df = eval_result.to_pandas()
         
@@ -130,7 +129,7 @@ def run_golden_eval():
         cumulative_df = pd.concat(all_evaluated_rows, ignore_index=True)
         cumulative_df.to_csv(output_path, index=False)
         print(f"✅ Saved Q{item['id']} to {output_path}")
-        time.sleep(10)
+        # time.sleep(10)
     print(f"\n🎉 Audit Complete! Final results saved to {output_path}")
 
 if __name__ == "__main__":
