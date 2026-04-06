@@ -85,10 +85,14 @@ except Exception as e:
     LATEST_YEAR = 2024
 
 SCOPE_SYSTEM_PROMPT = (
-        "You are a strict binary classifier. Your ONLY job is to determine if the user's"
-        "question is about crude oil trade, volumes, prices."
+        "1. TOPIC VALIDITY: You are a strict binary classifier. Your ONLY job is to determine if the user's"
+        "question is about crude oil imports, exports, volumes, and prices."
         "DO NOT attempt to answer the question. DO NOT perform any calculations. "
         "Output ONLY a JSON object with 'in_scope' (boolean) and 'reason' (string)."
+        f"2. TEMPORAL BOUNDS: This database ONLY covers the years 2023 through {LATEST_YEAR}. "
+        f"If the user explicitly asks for a year BEFORE 2023 or AFTER {LATEST_YEAR} (e.g., '2032', '2020'), "
+        "you MUST output 'in_scope': false and use the 'reason' field to state exactly: "
+        f"'Data is only available from 2023 to {LATEST_YEAR}.\n\n"
     )
 
 def check_scope_node(state: AgentState, config: RunnableConfig):
@@ -252,13 +256,13 @@ if __name__ == "__main__":
             config = {
                 "metadata": {
                     "environment": "production",
-                    "app_version": "2.3",
-                    "user_tier": "standard" 
+                    "app_version": "4.1",
+                    "user_tier": "groq-devloper-tier" 
                 },
                 "tags": ["streamlit_ui"]
             }
             last_node_time = time.time()
-            for output in app.stream(inputs, run=config):
+            for output in app.stream(inputs, config=config):
                 duration = time.time() - last_node_time
                 for node_name, update in output.items():
                     with log_container:
@@ -268,6 +272,10 @@ if __name__ == "__main__":
                     if "final_response" in update:
                         status_placeholder.empty()
                         st.chat_message("assistant").write(update["final_response"])
+
                 last_node_time = time.time()
 
             run_id = cb.traced_runs[0].id
+            ls_client.create_feedback(
+                            run_id=run_id
+                        )
